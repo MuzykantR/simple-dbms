@@ -1,3 +1,4 @@
+import java.nio.file.Paths;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
@@ -8,7 +9,15 @@ public class Main {
     private static final String HELP = "help - подсказка, exit - выход";
 
     public static void main(String[] args) {
-        System.out.println("help - список команд, exit - выход");
+        Database db;
+        try {
+            db = new Database(new FileTableRepository(Paths.get("data")));
+        } catch (DbException e) {
+            System.out.println("Ошибка: " + e.getMessage());
+            return;
+        }
+        System.out.println("Загружено таблиц: " + db.getTableNames().size() + ". help - список команд, exit - выход");
+
         Scanner in = new Scanner(System.in);
         boolean running = true;
         while (running) {
