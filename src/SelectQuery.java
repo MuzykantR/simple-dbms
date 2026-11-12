@@ -1,0 +1,53 @@
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * SELECT * FROM films
+ * SELECT title, rating FROM films
+ */
+public class SelectQuery implements Query {
+    private final String tableName;
+    private final List<String> columnNames;
+
+    /**
+     * @param columnNames нужные столбцы или null для *
+     */
+    public SelectQuery(String tableName, List<String> columnNames) {
+        this.tableName = tableName;
+        this.columnNames = columnNames;
+    }
+
+    @Override
+    public QueryResult execute(Database db) {
+        Table table = db.getTable(tableName);
+        TableSchema schema = table.getSchema();
+
+        int[] selected;
+        if (columnNames == null) {
+            selected = new int[schema.getColumnCount()];
+            for (int i = 0; i < selected.length; i++) {
+                selected[i] = i;
+            }
+        } else {
+            selected = new int[columnNames.size()];
+            for (int i = 0; i < selected.length; i++) {
+                selected[i] = schema.requireColumn(columnNames.get(i));
+            }
+        }
+
+        List<String> header = new ArrayList<>();
+        for (int index : selected) {
+            header.add(schema.getColumn(index).getName());
+        }
+        List<String[]> lines = new ArrayList<>();
+        for (Row row : table) {
+            String[] cells = new String[selected.length];
+            for (int i = 0; i < selected.length; i++) {
+                Column column = schema.getColumn(selected[i]);
+                cells[i] = column.getType().format(row.get(selected[i]));
+            }
+            lines.add(cells);
+        }
+        return new QueryResult("Найдено строк: " + lines.size(), header, lines);
+    }
+}

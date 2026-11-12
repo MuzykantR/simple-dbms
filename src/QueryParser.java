@@ -3,7 +3,7 @@ import java.util.List;
 
 /**
  * Разбирает текст запроса и создает объект запроса нужного вида.
- * Поддерживается простой формат: CREATE TABLE, DROP TABLE.
+ * Поддерживается простой формат: CREATE TABLE, DROP TABLE, INSERT, SELECT.
  */
 public class QueryParser {
     private final List<Token> tokens;
@@ -30,6 +30,12 @@ public class QueryParser {
                 break;
             case "DROP":
                 query = parseDrop();
+                break;
+            case "INSERT":
+                query = parseInsert();
+                break;
+            case "SELECT":
+                query = parseSelect();
                 break;
             default:
                 throw new DbException("Неизвестная команда " + command + ". Список команд: help");
@@ -97,6 +103,88 @@ public class QueryParser {
                 return new DropTableQuery(readName());
             default:
                 throw new DbException("После DROP ожидалось TABLE, а не " + what);
+        }
+    }
+
+    private Query parseInsert() {
+        expectWord("INTO");
+        String tableName = readName();
+        List<String> columnNames = null;
+        if (nextIsSymbol("(")) {
+            position++;
+            columnNames = readNameList();
+            expectSymbol(")");
+        }
+        expectWord("VALUES");
+        List<List<Object>> rows = new ArrayList<>();
+        while (true) {
+            expectSymbol("(");
+            List<Object> values = new ArrayList<>();
+            values.add(readValue());
+            while (nextIsSymbol(",")) {
+                position++;
+                values.add(readValue());
+            }
+            expectSymbol(")");
+            rows.add(values);
+            if (nextIsSymbol(",")) {
+                position++;
+            } else {
+                break;
+            }
+        }
+        return new InsertQuery(tableName, columnNames, rows);
+    }
+
+    private Query parseSelect() {
+        List<String> columnNames = null;
+        if (nextIsSymbol("*")) {
+            position++;
+        } else {
+            columnNames = readNameList();
+        }
+        expectWord("FROM");
+        String tableName = readName();
+        return new SelectQuery(tableName, columnNames);
+    }
+
+    private List<String> readNameList() {
+        List<String> names = new ArrayList<>();
+        names.add(readName());
+        while (nextIsSymbol(",")) {
+            position++;
+            names.add(readName());
+        }
+        return names;
+    }
+
+    private Object readValue() {
+        Token token = next();
+        switch (token.getType()) {
+            case NUMBER:
+                try {
+                    if (token.getText().contains(".")) {
+                        return Double.parseDouble(token.getText());
+                    }
+                    return Long.parseLong(token.getText());
+                } catch (NumberFormatException e) {
+                    throw new DbException("Неправильное число: " + token.getText());
+                }
+            case STRING:
+                return token.getText();
+            case WORD:
+                if (token.isWord("TRUE")) {
+                    return Boolean.TRUE;
+                }
+                if (token.isWord("FALSE")) {
+                    return Boolean.FALSE;
+                }
+                if (token.isWord("NULL")) {
+                    return null;
+                }
+                throw new DbException("Ожидалось значение, а не " + token.getText() + ". Строки пишутся в кавычках: 'текст'");
+            default:
+                throw new DbException("Ожидалось значение, а не " + token.getText());
         }
     }
 
