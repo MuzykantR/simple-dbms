@@ -22,11 +22,16 @@ public class Main {
 
     public static void main(String[] args) {
         Database db;
+        FileTableRepository repository;
         try {
-            db = new Database(new FileTableRepository(Paths.get("data")));
+            repository = new FileTableRepository(Paths.get("data"));
+            db = new Database(repository);
         } catch (DbException e) {
             System.out.println("Ошибка: " + e.getMessage());
             return;
+        }
+        for (String warning : repository.getWarnings()) {
+            System.out.println("Внимание: " + warning);
         }
         System.out.println("Загружено таблиц: " + db.getTableNames().size() + ". help - список команд, exit - выход");
 
