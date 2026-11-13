@@ -3,18 +3,21 @@ import java.util.List;
 
 /**
  * SELECT * FROM films
- * SELECT title, rating FROM films
+ * SELECT title, rating FROM films WHERE rating > 7.5
  */
 public class SelectQuery implements Query {
     private final String tableName;
     private final List<String> columnNames;
+    private final Condition where;
 
     /**
      * @param columnNames нужные столбцы или null для *
+     * @param where условие или null
      */
-    public SelectQuery(String tableName, List<String> columnNames) {
+    public SelectQuery(String tableName, List<String> columnNames, Condition where) {
         this.tableName = tableName;
         this.columnNames = columnNames;
+        this.where = where;
     }
 
     @Override
@@ -35,12 +38,17 @@ public class SelectQuery implements Query {
             }
         }
 
+        if (where != null) {
+            where.resolve(schema);
+        }
+        List<Row> found = table.findRows(where);
+
         List<String> header = new ArrayList<>();
         for (int index : selected) {
             header.add(schema.getColumn(index).getName());
         }
         List<String[]> lines = new ArrayList<>();
-        for (Row row : table) {
+        for (Row row : found) {
             String[] cells = new String[selected.length];
             for (int i = 0; i < selected.length; i++) {
                 Column column = schema.getColumn(selected[i]);
@@ -48,6 +56,6 @@ public class SelectQuery implements Query {
             }
             lines.add(cells);
         }
-        return new QueryResult("Найдено строк: " + lines.size(), header, lines);
+        return new QueryResult("Найдено строк: " + found.size(), header, lines);
     }
 }

@@ -1,6 +1,8 @@
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -72,6 +74,33 @@ public class Table implements Iterable<Row>, Serializable {
      */
     public Row findByKey(Object key) {
         return rows.get(key);
+    }
+
+    /**
+     * Строки, подходящие под условие. Если условия нет, возвращает все строки.
+     * Условие "ключ = значение" выполняется сразу через словарь, без перебора.
+     *
+     * @param condition условие, уже привязанное к этой таблице, или null
+     */
+    public List<Row> findRows(Condition condition) {
+        List<Row> result = new ArrayList<>();
+        if (condition == null) {
+            result.addAll(rows.values());
+            return result;
+        }
+        if (condition.getColumnIndex() == schema.getPrimaryKeyIndex() && condition.getOperator().equals("=")) {
+            Row row = rows.get(condition.getValue());
+            if (row != null) {
+                result.add(row);
+            }
+            return result;
+        }
+        for (Row row : rows.values()) {
+            if (condition.matches(row)) {
+                result.add(row);
+            }
+        }
+        return result;
     }
 
     @Override

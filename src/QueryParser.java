@@ -3,7 +3,7 @@ import java.util.List;
 
 /**
  * Разбирает текст запроса и создает объект запроса нужного вида.
- * Поддерживается простой формат: CREATE TABLE, DROP TABLE, INSERT, SELECT.
+ * Поддерживается простой формат: CREATE TABLE, DROP TABLE, INSERT, SELECT, UPDATE, DELETE.
  */
 public class QueryParser {
     private final List<Token> tokens;
@@ -36,6 +36,12 @@ public class QueryParser {
                 break;
             case "SELECT":
                 query = parseSelect();
+                break;
+            case "UPDATE":
+                query = parseUpdate();
+                break;
+            case "DELETE":
+                query = parseDelete();
                 break;
             default:
                 throw new DbException("Неизвестная команда " + command + ". Список команд: help");
@@ -145,7 +151,48 @@ public class QueryParser {
         }
         expectWord("FROM");
         String tableName = readName();
-        return new SelectQuery(tableName, columnNames);
+        Condition where = parseWhere();
+        return new SelectQuery(tableName, columnNames, where);
+    }
+
+    private Query parseUpdate() {
+        String tableName = readName();
+        expectWord("SET");
+        List<String> columnNames = new ArrayList<>();
+        List<Object> values = new ArrayList<>();
+        while (true) {
+            columnNames.add(readName());
+            expectSymbol("=");
+            values.add(readValue());
+            if (nextIsSymbol(",")) {
+                position++;
+            } else {
+                break;
+            }
+        }
+        Condition where = parseWhere();
+        return new UpdateQuery(tableName, columnNames, values, where);
+    }
+
+    private Query parseDelete() {
+        expectWord("FROM");
+        String tableName = readName();
+        Condition where = parseWhere();
+        return new DeleteQuery(tableName, where);
+    }
+
+    private Condition parseWhere() {
+        if (position >= tokens.size() || !tokens.get(position).isWord("WHERE")) {
+            return null;
+        }
+        position++;
+        String columnName = readName();
+        Token operator = next();
+        if (operator.getType() != TokenType.SYMBOL || "(),;*".contains(operator.getText())) {
+            throw new DbException("После " + columnName + " ожидался оператор сравнения (= != < > <= >=)");
+        }
+        Object value = readValue();
+        return new Condition(columnName, operator.getText(), value);
     }
 
     private List<String> readNameList() {
