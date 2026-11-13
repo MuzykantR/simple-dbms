@@ -1,5 +1,8 @@
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,6 +18,7 @@ public class Table implements Iterable<Row>, Serializable {
 
     private final TableSchema schema;
     private final Map<Object, Row> rows = new LinkedHashMap<>();
+    private transient Map<String, HashIndex> indexes = new HashMap<>();
 
     public Table(TableSchema schema) {
         this.schema = schema;
@@ -42,6 +46,9 @@ public class Table implements Iterable<Row>, Serializable {
             throw new DbException("В таблице " + getName() + " уже есть строка с ключом " + key);
         }
         rows.put(key, row);
+        for (HashIndex index : indexes.values()) {
+            index.add(row);
+        }
     }
 
     /**
@@ -60,13 +67,21 @@ public class Table implements Iterable<Row>, Serializable {
             rows.remove(oldKey);
             rows.put(newKey, newRow);
         }
+        for (HashIndex index : indexes.values()) {
+            index.update(oldRow, newRow);
+        }
     }
 
     /**
      * Удаляет строку.
      */
     public void delete(Row row) {
-        rows.remove(row.get(schema.getPrimaryKeyIndex()));
+        Row removed = rows.remove(row.get(schema.getPrimaryKeyIndex()));
+        if (removed != null) {
+            for (HashIndex index : indexes.values()) {
+                index.remove(removed);
+            }
+        }
     }
 
     /**
@@ -79,6 +94,7 @@ public class Table implements Iterable<Row>, Serializable {
     /**
      * Строки, подходящие под условие. Если условия нет, возвращает все строки.
      * Условие "ключ = значение" выполняется сразу через словарь, без перебора.
+     * Условие "столбец = значение" по столбцу с индексом выполняется через индекс.
      *
      * @param condition условие, уже привязанное к этой таблице, или null
      */
@@ -95,6 +111,13 @@ public class Table implements Iterable<Row>, Serializable {
             }
             return result;
         }
+        HashIndex index = indexes.get(condition.getColumnName().toLowerCase());
+        if (index != null && condition.getOperator().equals("=") && condition.getValue() != null) {
+            for (Object key : index.find(condition.getValue())) {
+                result.add(rows.get(key));
+            }
+            return result;
+        }
         for (Row row : rows.values()) {
             if (condition.matches(row)) {
                 result.add(row);
@@ -103,9 +126,40 @@ public class Table implements Iterable<Row>, Serializable {
         return result;
     }
 
+    /**
+     * Добавляет индекс к таблице.
+     */
+    public void addIndex(HashIndex index) {
+        indexes.put(index.getColumnName().toLowerCase(), index);
+    }
+
+    public void removeIndex(HashIndex index) {
+        indexes.remove(index.getColumnName().toLowerCase());
+    }
+
+    /**
+     * Индекс по столбцу или null, если его нет.
+     */
+    public HashIndex getIndex(String columnName) {
+        return indexes.get(columnName.toLowerCase());
+    }
+
+    public List<HashIndex> getIndexes() {
+        return new ArrayList<>(indexes.values());
+    }
+
     @Override
     public Iterator<Row> iterator() {
         return rows.values().iterator();
+    }
+
+    /**
+     * Индексы хранятся в своих файлах, а не внутри таблицы,
+     * поэтому после загрузки таблицы список индексов создается пустым.
+     */
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        indexes = new HashMap<>();
     }
 
     private void checkKey(Object key) {
