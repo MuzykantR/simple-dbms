@@ -15,6 +15,12 @@ public class Database {
         this.repository = repository;
         for (Table table : repository.loadAll()) {
             tables.put(table.getName().toLowerCase(), table);
+            for (HashIndex index : repository.loadIndexes(table)) {
+                if (index.getRowCount() != table.size()) {
+                    index.rebuild(table);
+                }
+                table.addIndex(index);
+            }
         }
     }
 
@@ -59,6 +65,9 @@ public class Database {
      */
     public void save(Table table) {
         repository.save(table);
+        for (HashIndex index : table.getIndexes()) {
+            repository.saveIndex(index);
+        }
     }
 
     /**
@@ -76,10 +85,11 @@ public class Database {
     }
 
     /**
-     * Удаляет индекс из таблицы.
+     * Удаляет индекс из таблицы и с диска.
      */
     public void dropIndex(HashIndex index) {
         getTable(index.getTableName()).removeIndex(index);
+        repository.deleteIndex(index);
     }
 
     public List<String> getTableNames() {

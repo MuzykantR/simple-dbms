@@ -20,4 +20,19 @@ public interface TableRepository {
      * Удаляет сохраненную таблицу.
      */
     void delete(String tableName);
+
+    /**
+     * Сохраняет индекс в отдельный файл.
+     */
+    void saveIndex(HashIndex index);
+
+    /**
+     * Загружает индексы таблицы.
+     */
+    List<HashIndex> loadIndexes(Table table);
+
+    /**
+     * Удаляет файл индекса.
+     */
+    void deleteIndex(HashIndex index);
 }
