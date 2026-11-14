@@ -21,6 +21,10 @@ public class Main {
             "  SELECT title, rating FROM films WHERE rating > 7\n" +
             "  UPDATE films SET rating = 8.2 WHERE id = 1\n" +
             "  DELETE FROM films WHERE title = 'Barbie'\n" +
+            "  CREATE TABLE sessions (id INT PRIMARY KEY, film_id INT REFERENCES films(id), hall INT)\n" +
+            "  SHOW TABLES\n" +
+            "  DESCRIBE films\n" +
+            "  RUN 'demo.sql' - выполнить запросы из файла\n" +
             "Типы: INT, DOUBLE, STRING, DATE ('ГГГГ-ММ-ДД'), BOOLEAN (TRUE/FALSE)\n" +
             "Операторы в WHERE: = != < > <= >=\n" +
             "help - эта подсказка, exit - выход";
