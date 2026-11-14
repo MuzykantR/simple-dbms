@@ -87,6 +87,13 @@ public class QueryParser {
                         }
                         primaryKeyIndex = columns.size() - 1;
                         break;
+                    case "REFERENCES":
+                        String referencedTable = readName();
+                        expectSymbol("(");
+                        String referencedColumn = readName();
+                        expectSymbol(")");
+                        column.setReference(referencedTable, referencedColumn);
+                        break;
                     default:
                         throw new DbException("Непонятное слово " + word + " в описании столбца " + columnName);
                 }
