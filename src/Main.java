@@ -24,6 +24,8 @@ public class Main {
             "  CREATE TABLE sessions (id INT PRIMARY KEY, film_id INT REFERENCES films(id), hall INT)\n" +
             "  SHOW TABLES\n" +
             "  DESCRIBE films\n" +
+            "  CREATE INDEX idx_films_title ON films (title)\n" +
+            "  DROP INDEX idx_films_title\n" +
             "  RUN 'demo.sql' - выполнить запросы из файла\n" +
             "Типы: INT, DOUBLE, STRING, DATE ('ГГГГ-ММ-ДД'), BOOLEAN (TRUE/FALSE)\n" +
             "Операторы в WHERE: = != < > <= >=\n" +

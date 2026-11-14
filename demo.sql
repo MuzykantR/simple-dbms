@@ -9,6 +9,7 @@ INSERT INTO sessions VALUES (1, 2, 1, '2026-11-15', 450.0, FALSE), (2, 2, 3, '20
 INSERT INTO sessions (id, film_id, hall) VALUES (4, 1, 1)
 SELECT * FROM films
 SELECT title, rating FROM films WHERE rating > 8
+CREATE INDEX idx_sessions_film ON sessions (film_id)
 SELECT * FROM sessions WHERE film_id = 2
 UPDATE films SET in_release = TRUE WHERE id = 1
 UPDATE sessions SET price = 500 WHERE hall = 1
