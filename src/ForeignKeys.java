@@ -1,10 +1,3 @@
-import src.Column;
-import src.Database;
-import src.DbException;
-import src.Row;
-import src.Table;
-import src.TableSchema;
-
 /**
  * Проверки внешних ключей (REFERENCES).
  * Строка может ссылаться только на существующую строку другой таблицы,

@@ -43,6 +43,13 @@ public class QueryParser {
             case "DELETE":
                 query = parseDelete();
                 break;
+            case "SHOW":
+                expectWord("TABLES");
+                query = new ShowTablesQuery();
+                break;
+            case "DESCRIBE":
+                query = new DescribeQuery(readName());
+                break;
             default:
                 throw new DbException("Неизвестная команда " + command + ". Список команд: help");
         }
@@ -229,7 +236,7 @@ public class QueryParser {
     private Object readValue() {
         Token token = next();
         switch (token.getType()) {
-            case TokenType.NUMBER:
+            case NUMBER:
                 try {
                     if (token.getText().contains(".")) {
                         return Double.parseDouble(token.getText());
@@ -238,9 +245,9 @@ public class QueryParser {
                 } catch (NumberFormatException e) {
                     throw new DbException("Неправильное число: " + token.getText());
                 }
-            case TokenType.STRING:
+            case STRING:
                 return token.getText();
-            case TokenType.WORD:
+            case WORD:
                 if (token.isWord("TRUE")) {
                     return Boolean.TRUE;
                 }
