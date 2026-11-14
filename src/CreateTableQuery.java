@@ -17,6 +17,7 @@ public class CreateTableQuery implements Query {
     @Override
     public QueryResult execute(Database db) {
         TableSchema schema = new TableSchema(tableName, columns, primaryKeyIndex);
+        ForeignKeys.checkSchema(db, schema);
         db.createTable(schema);
         return new QueryResult("Таблица " + tableName + " создана, первичный ключ " + schema.getPrimaryKey().getName());
     }

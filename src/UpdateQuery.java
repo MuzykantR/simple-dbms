@@ -45,6 +45,7 @@ public class UpdateQuery implements Query {
                 for (int i = 0; i < targets.length; i++) {
                     newRow.set(targets[i], newValues[i]);
                 }
+                ForeignKeys.checkUpdate(db, table, row, newRow);
                 table.update(row, newRow);
                 changed++;
             }

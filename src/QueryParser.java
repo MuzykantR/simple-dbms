@@ -229,7 +229,7 @@ public class QueryParser {
     private Object readValue() {
         Token token = next();
         switch (token.getType()) {
-            case NUMBER:
+            case TokenType.NUMBER:
                 try {
                     if (token.getText().contains(".")) {
                         return Double.parseDouble(token.getText());
@@ -238,9 +238,9 @@ public class QueryParser {
                 } catch (NumberFormatException e) {
                     throw new DbException("Неправильное число: " + token.getText());
                 }
-            case STRING:
+            case TokenType.STRING:
                 return token.getText();
-            case WORD:
+            case TokenType.WORD:
                 if (token.isWord("TRUE")) {
                     return Boolean.TRUE;
                 }

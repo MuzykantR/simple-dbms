@@ -10,6 +10,7 @@ public class DropTableQuery implements Query {
 
     @Override
     public QueryResult execute(Database db) {
+        ForeignKeys.checkTableNotReferenced(db, tableName);
         db.dropTable(tableName);
         return new QueryResult("Таблица " + tableName + " удалена");
     }

@@ -20,6 +20,9 @@ public class DeleteQuery implements Query {
             where.resolve(table.getSchema());
         }
         List<Row> found = table.findRows(where);
+        for (Row row : found) {
+            ForeignKeys.checkNotReferenced(db, table, row);
+        }
 
         int deleted = 0;
         try {

@@ -72,6 +72,7 @@ public class InsertQuery implements Query {
             if (table.findByKey(key) != null || !newKeys.add(key)) {
                 throw new DbException("Строка с ключом " + key + " уже есть, ничего не добавлено");
             }
+            ForeignKeys.checkRow(db, schema, row);
         }
 
         for (Row row : newRows) {
