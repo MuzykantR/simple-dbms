@@ -1,4 +1,9 @@
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
@@ -50,6 +55,8 @@ public class Main {
                 running = false;
             } else if (line.equalsIgnoreCase("help")) {
                 System.out.println(HELP);
+            } else if (line.toUpperCase().startsWith("RUN ")) {
+                runScript(db, printer, line.substring(4).trim());
             } else if (!line.isEmpty()) {
                 execute(db, printer, line);
             }
@@ -62,6 +69,26 @@ public class Main {
             printer.print(query.execute(db));
         } catch (DbException e) {
             System.out.println("Ошибка: " + e.getMessage());
+        }
+    }
+
+    private static void runScript(Database db, ResultPrinter printer, String fileName) {
+        if (fileName.length() >= 2 && fileName.startsWith("'") && fileName.endsWith("'")) {
+            fileName = fileName.substring(1, fileName.length() - 1);
+        }
+        List<String> lines;
+        try {
+            lines = Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8);
+        } catch (IOException | InvalidPathException e) {
+            System.out.println("Ошибка: не удалось прочитать файл " + fileName);
+            return;
+        }
+        for (String scriptLine : lines) {
+            String text = scriptLine.trim();
+            if (!text.isEmpty() && !text.startsWith("--")) {
+                System.out.println("db> " + text);
+                execute(db, printer, text);
+            }
         }
     }
 }
