@@ -60,8 +60,10 @@ public class QueryParser {
         switch (what) {
             case "TABLE":
                 return parseCreateTable();
+            case "INDEX":
+                return parseCreateIndex();
             default:
-                throw new DbException("После CREATE ожидалось TABLE, а не " + what);
+                throw new DbException("После CREATE ожидалось TABLE или INDEX, а не " + what);
         }
     }
 
@@ -102,13 +104,25 @@ public class QueryParser {
         return new CreateTableQuery(tableName, columns, primaryKeyIndex);
     }
 
+    private Query parseCreateIndex() {
+        String indexName = readName();
+        expectWord("ON");
+        String tableName = readName();
+        expectSymbol("(");
+        String columnName = readName();
+        expectSymbol(")");
+        return new CreateIndexQuery(indexName, tableName, columnName);
+    }
+
     private Query parseDrop() {
         String what = readName().toUpperCase();
         switch (what) {
             case "TABLE":
                 return new DropTableQuery(readName());
+            case "INDEX":
+                return new DropIndexQuery(readName());
             default:
-                throw new DbException("После DROP ожидалось TABLE, а не " + what);
+                throw new DbException("После DROP ожидалось TABLE или INDEX, а не " + what);
         }
     }
 

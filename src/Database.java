@@ -61,6 +61,27 @@ public class Database {
         repository.save(table);
     }
 
+    /**
+     * Индекс по имени или null, если такого нет.
+     */
+    public HashIndex findIndex(String indexName) {
+        for (Table table : tables.values()) {
+            for (HashIndex index : table.getIndexes()) {
+                if (index.getName().equalsIgnoreCase(indexName)) {
+                    return index;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Удаляет индекс из таблицы.
+     */
+    public void dropIndex(HashIndex index) {
+        getTable(index.getTableName()).removeIndex(index);
+    }
+
     public List<String> getTableNames() {
         List<String> names = new ArrayList<>();
         for (Table table : tables.values()) {
